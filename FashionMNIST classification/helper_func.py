@@ -34,3 +34,41 @@ def eval_model(model: torch.nn.Module,
     return {"model_name": model.__class__.__name__,
             "model_acc": accuracy,
             "model_loss": total_loss}
+
+
+def train_model(model: torch.nn.Module,
+                loss_fn: torch.nn.Module,
+                optimizer: torch.optim.Optimizer,
+                train_dataloader: torch.utils.data.DataLoader,
+                epochs: int,
+                device: str):
+    '''this function trains a model with the specified number of epochs'''
+
+    model.to(device)
+    for epoch in range(epochs):
+        print("training in epoch: ", epoch)
+
+        batch_count = 0
+        for X, y in train_dataloader:
+            X, y = X.to(device), y.to(device)
+            batch_count += 1
+            # X = a batch of 32 images
+            # y = the corresponding labels for the images
+            model.train()  # setting our model to train mode. whether we are testing or training is needed to be known by some layers but not all
+            # 1 forward pass
+            y_pred = model(X)
+            # 2 loss for the batch
+            loss = loss_fn(y_pred, y)
+            # 3 optimizer zero grad
+            optimizer.zero_grad()
+            # 4 backward()
+            loss.backward()  # the backward function doesn't work without a forward pass prior to its call. hence we had to calulate loss. i guess the forward pass creates the necessary computational graph for gradient calculation
+            # 5 update weights
+            optimizer.step()
+
+            if (batch_count % 400 == 0):
+                print("finished training with batch ", batch_count)
+
+        print("finished training of epoch ", epoch)
+        if (epoch == (epochs-1)):
+            print("finished training")
